@@ -1,81 +1,103 @@
 import os
 from dotenv import load_dotenv
 from src.data_ingestion.utils.logger import get_logger
+from typing import Final
 
 load_dotenv()
 
 logger = get_logger(__name__)
 
-class RedditConfig():
+class RedditConfig:
+    client_id: str
+    client_secret: str
+    password_account: str
+    user_agent: str
+    username: str
+    
+    REQUIRED_KEYS: Final[list[str]] = [
+        "REDDIT_CLIENT_ID",
+        "REDDIT_CLIENT_SECRET",
+        "REDDIT_PASSWORD_ACCOUNT",
+        "REDDIT_USER_AGENT",
+        "REDDIT_USERNAME",
+    ]
+
     def __init__(self):
-        self.__REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID")
-        self.__REDDIT_CLIENT_SECRET = os.getenv("REDDIT_CLIENT_SECRET")
-        self.__REDDIT_PASSWORD_ACCOUNT = os.getenv("REDDIT_PASSWORD_ACCOUNT")
-        self.__REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT")
-        self.__REDDIT_USERNAME = os.getenv("REDDIT_USERNAME")
+        self._load_config()
+        logger.info("Reddit configuration loaded successfully.")
+
+    def _load_config(self) -> None:
+        """
+        Loads the environment variables and ensures they are not None.
+        (Type Narrowing).
+        """
         
-        if self.__REDDIT_CLIENT_ID is None:
-            logger.error("REDDIT_CLIENT_ID is not set in environment variables.")
-            raise ValueError("REDDIT_CLIENT_ID is not set in environment variables.")
-        if self.__REDDIT_CLIENT_SECRET is None:
-            logger.error("REDDIT_CLIENT_SECRET is not set in environment variables.")
-            raise ValueError("REDDIT_CLIENT_SECRET is not set in environment variables.")
-        if self.__REDDIT_PASSWORD_ACCOUNT is None:
-            logger.error("REDDIT_PASSWORD_ACCOUNT is not set in environment variables.")
-            raise ValueError("REDDIT_PASSWORD_ACCOUNT is not set in environment variables.")
-        if self.__REDDIT_USER_AGENT is None:
-            logger.error("REDDIT_USER_AGENT is not set in environment variables.")
-            raise ValueError("REDDIT_USER_AGENT is not set in environment variables.")
-        if self.__REDDIT_USERNAME is None:
-            logger.error("REDDIT_USERNAME is not set in environment variables.")
-            raise ValueError("REDDIT_USERNAME is not set in environment variables.")
-        
-        logger.info("REDDIT configuration loaded successfully.")
-        
+        for key in self.REQUIRED_KEYS:
+            value = os.getenv(key)
+            
+            if value is None:
+                logger.error(f"{key} is not set in environment variables.")
+                raise ValueError(f"{key} is not set in environment variables.")
+            
+            attribute_name = key.lower().replace("reddit_", "")
+            
+            setattr(self, attribute_name, value)
 
     @property
-    def env(self):
+    def env(self) -> dict[str, str]:
+
         return {
-            "REDDIT_CLIENT_ID": self.__REDDIT_CLIENT_ID,
-            "REDDIT_CLIENT_SECRET": self.__REDDIT_CLIENT_SECRET,
-            "REDDIT_PASSWORD_ACCOUNT": self.__REDDIT_PASSWORD_ACCOUNT,
-            "REDDIT_USER_AGENT": self.__REDDIT_USER_AGENT,
-            "REDDIT_USERNAME": self.__REDDIT_USERNAME,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "password_account": self.password_account,
+            "user_agent": self.user_agent,
+            "username": self.username,
         }
 
 
 class PostgresConfig():
+    
+    db: str
+    user: str
+    password: str
+    port: str
+    data_path: str
+    
+    REQUIRED_KEYS: Final[list[str]] = [
+        "POSTGRES_DB",
+        "POSTGRES_USER",
+        "POSTGRES_PASSWORD",
+        "POSTGRES_PORT",
+        "POSTGRES_DATA_PATH",
+    ]
+    
     def __init__(self):
-        self.__POSTGRES_DB = os.getenv("POSTGRES_DB")
-        self.__POSTGRES_USER = os.getenv("POSTGRES_USER")
-        self.__POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-        self.__POSTGRES_PORT = os.getenv("POSTGRES_PORT")
-        self.__POSTGRES_DATA_PATH = os.getenv("POSTGRES_DATA_PATH")
-
-        if self.__POSTGRES_DB is None:
-            logger.error("POSTGRES_DB is not set in environment variables.")
-            raise ValueError("POSTGRES_DB is not set in environment variables.")
-        if self.__POSTGRES_USER is None:
-            logger.error("POSTGRES_USER is not set in environment variables.")
-            raise ValueError("POSTGRES_USER is not set in environment variables.")
-        if self.__POSTGRES_PASSWORD is None:
-            logger.error("POSTGRES_PASSWORD is not set in environment variables.")
-            raise ValueError("POSTGRES_PASSWORD is not set in environment variables.")
-        if self.__POSTGRES_PORT is None:
-            logger.error("POSTGRES_PORT is not set in environment variables.")
-            raise ValueError("POSTGRES_PORT is not set in environment variables.")
-        if self.__POSTGRES_DATA_PATH is None:
-            logger.error("POSTGRES_DATA_PATH is not set in environment variables.")
-            raise ValueError("POSTGRES_DATA_PATH is not set in environment variables.")
-        
+        self._load_config()
         logger.info("Postgres configuration loaded successfully.")
         
+    def _load_config(self) -> None:
+        """
+        Loads the environment variables and ensures they are not None.
+        (Type Narrowing).
+        """
+        
+        for key in self.REQUIRED_KEYS:
+            value = os.getenv(key)
+            
+            if value is None:
+                logger.error(f"{key} is not set in environment variables.")
+                raise ValueError(f"{key} is not set in environment variables.")
+            
+            attribute_name = key.lower().replace("postgres_", "")
+            
+            setattr(self, attribute_name, value)
+        
     @property
-    def env(self):
+    def env(self) -> dict[str, str]:
         return {
-            "POSTGRES_DB": self.__POSTGRES_DB,
-            "POSTGRES_USER": self.__POSTGRES_USER,
-            "POSTGRES_PASSWORD": self.__POSTGRES_PASSWORD,
-            "POSTGRES_PORT": self.__POSTGRES_PORT,
-            "POSTGRES_DATA_PATH": self.__POSTGRES_DATA_PATH,
+            "POSTGRES_DB": self.db,
+            "POSTGRES_USER": self.user,
+            "POSTGRES_PASSWORD": self.password,
+            "POSTGRES_PORT": self.port,
+            "POSTGRES_DATA_PATH": self.data_path,
         }
