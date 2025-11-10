@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ${POSTGRES_DATA_PATH}:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    command: >
+      bash -c "
+        if [ ! -d '${POSTGRES_DATA_PATH}' ]; then
+          echo 'Diretório não encontrado, criando em: ${POSTGRES_DATA_PATH}';
+          mkdir -p '${POSTGRES_DATA_PATH}';
+        else
+          echo 'Diretório já existe: ${POSTGRES_DATA_PATH}';
+        fi;
+        exec docker-entrypoint.sh postgres
+      "
