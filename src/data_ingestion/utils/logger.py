@@ -12,7 +12,7 @@ DEFAULT_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 def get_logger(
     name: str = __name__,
     level: int = logging.INFO,
-    log_file: Optional[str] = None,
+    log_file: Optional[str] = "logs/app.log",
     max_bytes: int = 10 * 1024 * 1024,
     backup_count: int = 5,
     fmt: str = DEFAULT_FORMAT,
