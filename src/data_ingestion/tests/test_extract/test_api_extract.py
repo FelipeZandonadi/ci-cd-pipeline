@@ -6,12 +6,22 @@ from src.data_ingestion.extract.api_extract import RedditExtractor
 
 @pytest.fixture
 def extractor_instance():
-    """Creates an instance of the RedditExtractor class with test data."""
-    return RedditExtractor(
-        subreddit="test_subreddit",
-        access_token="mock_token_123",
-        user_agent="TestScript/1.0"
-    )
+    """Creates an instance of the RedditExtractor class with mocked authentication."""
+    # Mockup do requests.post que é usado dentro do método access_token()
+    with patch("src.data_ingestion.extract.api_extract.requests.post") as mock_post:
+        # Simula uma resposta de sucesso do Reddit com um token falso
+        mock_auth_response = MagicMock()
+        mock_auth_response.status_code = 200
+        mock_auth_response.json.return_value = {"access_token": "mock_token_123"}
+        mock_post.return_value = mock_auth_response
+
+        yield RedditExtractor(
+            client_id='mockup_client_id',
+            client_secret='mockup_client_secret',
+            username='mockup_username',
+            password='mockup_password',
+            user_agent="TestScript/1.0"
+        )
 
 
 @patch("src.data_ingestion.extract.api_extract.requests.get")
@@ -51,9 +61,10 @@ def test_fetch_threads_success(mock_get, extractor_instance):
     mock_response.json.return_value = expected_json
     mock_get.return_value = mock_response
 
-    result = extractor_instance.fetch_threads(limit=2)
+    result = extractor_instance.bootstrap(subreddit='test_subreddit', limit=2)
 
-    assert result == expected_json
+    assert result == [expected_json]
+
     expected_url = "https://oauth.reddit.com/r/test_subreddit/new"
     expected_headers = {
         'Authorization': 'bearer mock_token_123',
@@ -80,9 +91,11 @@ def test_fetch_threads_http_error(mock_get, extractor_instance):
     mock_response.text = mock_error_message
     mock_get.return_value = mock_response
 
-    result = extractor_instance.fetch_threads(limit=5)
 
-    assert result == {"error": mock_status, "message": mock_error_message}
+    result = extractor_instance.bootstrap(subreddit='test_subreddit', limit=5)
+
+    assert result == [{"error": mock_status, "message": mock_error_message}]
     
     mock_get.assert_called_once()
+    # Verificação dos parâmetros de chamada
     assert mock_get.call_args[1]['params']['limit'] == 5
