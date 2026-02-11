@@ -69,8 +69,27 @@ class RedditExtractor:
         }
         logger.info(f"RedditExtractor initialized")
 
+    def bootstrap(self, subreddit: str, limit:int = 25) -> list[dict]:
+        """
+        Executes the primary data ingestion for a targeted subreddit.
 
-    def fetch_threads(self, subreddit, limit: int = 10) -> dict:
+        This method initializes the data pipeline by fetching the most recent 
+        threads ('new') from the Reddit API. It serves as the baseline load, 
+        establishing the initial state without using pagination cursors.
+
+        Args:
+            subreddit (str): The name of the subreddit to ingest (e.g., 'dataengineering').
+            limit (int, optional): The maximum number of threads to retrieve (max is 100) 
+                in this initial batch. Defaults to 25.
+
+        Returns:
+            list[dict]: A list containing the JSON response payload.
+
+        Note:
+            To perform subsequent incremental loads, the 'data.before' fullname 
+            from this response must be captured and persisted.
+        """
+
         thread_endpoint = f"/r/{subreddit}/new"
         url = f"{self.base_url}{thread_endpoint}"
         params = {
@@ -80,10 +99,63 @@ class RedditExtractor:
         
         if response.status_code == 200:
             logger.info(f"Fetched threads successfully from subreddit: {subreddit}")
-            return response.json()
+            return [response.json()]
         else:
             logger.error(f"Failed to fetch threads from subreddit: {subreddit}")
-            return {"error": response.status_code, "message": response.text}
+            return [{"error": response.status_code, "message": response.text}]
+
+    def sync_next_batch(
+            self, subreddit: str,
+            fullname: str,
+            limit: int = 25, 
+            count: int = 30
+        ) -> list[dict]:
+        """
+        Performs an incremental sync of new threads using a pagination anchor.
+
+        This method traverses the subreddit feed backwards from a specific point 
+        (the 'fullname' anchor) towards the most recent post. It uses the 'before' 
+        parameter to fetch batches of data until no newer items are found.
+
+        Args:
+            subreddit (str): The name of the subreddit to synchronize.
+            fullname (str): The fullname (type_id) of the item to use as the 
+                anchor point for the slice. The sync fetches items created 
+                after this point.
+            limit (int, optional): The maximum number of items to return in 
+                each slice of the listing. Defaults to 25 (max is 100).
+            count (int, optional): The number of items already seen in this 
+                listing, used by the API to maintain consistency. Defaults to 30.
+
+        Returns:
+            list[dict]: A list of JSON response dictionaries containing the 
+                newly fetched batches of threads.
+        """
+
+        result: list = []
+        before: str = fullname
+        params = {
+            'limit': limit
+        }
+
+        while before is not None:
+            logger.debug(before)
+            thread_endpoint = f"/r/{subreddit}/new?before={before}&limit={limit}&count={count}"
+            url = f"{self.base_url}{thread_endpoint}"
+            response = requests.get(url, headers=self.headers, params=params)
+        
+            if response.status_code == 200:
+                logger.info(f"Fetched threads successfully from subreddit: {subreddit}")
+                aux = response.json()
+                before = aux.get('data').get('before')
+                
+                result.append(aux)
+            else:
+                logger.error(f"Failed to fetch threads from subreddit: {subreddit}")
+                return [{"error": response.status_code, "message": response.text}]
+        
+        return result
         
     def fetch_comments(self, subreddit) -> None:
         comments_endpoint = f"#"
+        pass
