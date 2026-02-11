@@ -1,8 +1,7 @@
 from src.data_ingestion.config.settings import RedditConfig, PostgresConfig
 from src.data_ingestion.utils.logger import get_logger
-from src.data_ingestion.extract.access_token import AccessToken
 from src.data_ingestion.extract.api_extract import RedditExtractor
-from datetime import date
+from src.data_ingestion.load.data_load import save_json
 
 logger = get_logger(__name__)
 
@@ -14,26 +13,18 @@ def config_env() -> dict[str, dict[str, str]]:
         "reddit": reddit_config.env,
         "postgres": postgres_config.env,
     }
-    
-def generate_reddit_token(configs) -> str:
-    
-    acessToken: AccessToken = AccessToken(
-        client_id=configs["reddit"]["client_id"],
-        client_secret=configs["reddit"]["client_secret"],
-        username=configs["reddit"]["username"],
-        password=configs["reddit"]["password_account"],
-        user_agent=configs["reddit"]["user_agent"],
-        )
-    
-    token: str = acessToken.access_token
-    return token
 
 def runner():
     configs = config_env()
     logger.info("Configurations loaded successfully.")
 
-    token: str = generate_reddit_token(configs)
-    logger.info(f"Generated Reddit Token: {token[0:4]}...{token[-4:]}")
+    test: RedditExtractor = RedditExtractor(
+        client_id=configs["reddit"]["client_id"],
+        client_secret=configs["reddit"]["client_secret"],
+        username=configs["reddit"]["username"],
+        password=configs["reddit"]["password_account"],
+        user_agent=configs["reddit"]["user_agent"],
+    )
     
     subreddits: list[str] = [
         "CryptoCurrency",
@@ -47,10 +38,22 @@ def runner():
         "CryptoTechnology",
     ]
     
-    test = RedditExtractor(
-        subreddit=subreddits[0],
-        access_token=token,
-        user_agent=configs["reddit"]["user_agent"]
-    )
     
-    print(test.fetch_threads(limit=5))
+    result: list[dict] = test.bootstrap(
+        subreddit=subreddits[0],
+        limit=25,
+    )
+
+    save_json(result, '/app/data/test.json', True)
+    logger.debug('TESTE')
+    data = test.sync_next_batch(
+        subreddit=subreddits[0],
+        fullname='t3_1qwihpf',
+        limit=25,
+    )
+
+    save_json(data, '/app/data/test2.json', True)
+
+
+if __name__ == "__main__":
+    runner()
