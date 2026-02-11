@@ -1,5 +1,27 @@
 services:
+  data_ingestion:
+    environment:
+      - PYTHONUNBUFFERED=1
+    build: .
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+
+  tests:
+    profiles:
+      - tests
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    # Sobrescreve o comando do Dockerfile para rodar o pytest
+    command: pytest
+
   postgres:
+    profiles: ["legacy"]
     image: postgres:15
     container_name: postgres_db
     restart: unless-stopped

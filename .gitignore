@@ -209,6 +209,5 @@ __marimo__/
 
 # Local folders
 logs/
-data/
 data_exploration/
 .vscode/
