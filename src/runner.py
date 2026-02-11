@@ -1,7 +1,7 @@
 from src.data_ingestion.config.settings import RedditConfig, PostgresConfig
 from src.data_ingestion.utils.logger import get_logger
 from src.data_ingestion.extract.api_extract import RedditExtractor
-from src.data_ingestion.load.data_load import save_json
+from src.data_ingestion.load.data_load import save_json, upload_json_to_s3
 
 logger = get_logger(__name__)
 
@@ -43,8 +43,8 @@ def runner():
         subreddit=subreddits[0],
         limit=25,
     )
+    upload_json_to_s3(result, 'cryptocore-data')
 
-    save_json(result, '/app/data/test.json', True)
     logger.debug('TESTE')
     data = test.sync_next_batch(
         subreddit=subreddits[0],
@@ -52,7 +52,7 @@ def runner():
         limit=25,
     )
 
-    save_json(data, '/app/data/test2.json', True)
+    upload_json_to_s3(data, 'cryptocore-data')
 
 
 if __name__ == "__main__":
