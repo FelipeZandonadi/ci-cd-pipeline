@@ -1,54 +1,89 @@
 import requests
 from requests.auth import HTTPBasicAuth
-import src.data_ingestion.utils.logger as logger_utils
+from datetime import timedelta
+from src.data_ingestion.utils.logger import get_logger
 
-logger = logger_utils.get_logger(__name__)
+logger = get_logger(__name__)
 
 class RedditExtractor:
     """
     A class to extract data raw (the format is json) from Subreddit using the requests library.
 
     Attributes:
-        base_url (str): The base URL for Reddit API.
-        thread_endpoint (str): The endpoint for fetching subreddit threads.
-        comments_endpoint (str): The endpoint for fetching comments of a thread.
-        subreddit (str): The subreddit to extract data from.
-        headers (dict): The headers to be used in the requests.
-        access_token (str): The access token for Reddit API authentication.
+        client_id (str): The client ID for Reddit API.
+        client_secret (str): The client secret for Reddit API.
+        username (str): The Reddit username.
+        password (str): The Reddit password.
+        user_agent (str): The application name
     """
     
     base_url: str
-    thread_endpoint: str
-    comments_endpoint: str
-    subreddit: str
-    headers: dict[str, str]
-    access_token: str
+    client_id: str
+    client_secret: str
+    username: str
+    password: str
     user_agent: str
+    headers: dict[str, str]
     
-    def __init__(self, subreddit: str, access_token: str, user_agent: str):
+    def __init__(self, client_id: str, client_secret: str, username: str, password: str, user_agent: str):
         self.base_url = "https://oauth.reddit.com"
-        self.thread_endpoint = f"/r/{subreddit}/new"
-        self.comments_endpoint = f"#"
-        self.subreddit = subreddit
-        self.access_token = access_token
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.username = username
+        self.password = password
         self.user_agent = user_agent
+
+        def access_token() -> str:
+            """
+            Build access token for Reddit API using OAuth2.
+
+            Returns:
+                str: The access token.
+            """
+            auth: HTTPBasicAuth = HTTPBasicAuth(self.client_id, self.client_secret)
+            data: dict[str, str] = {
+                'grant_type': 'password',
+                'username': self.username,
+                'password': self.password
+            }
+            response = requests.post(
+                'https://www.reddit.com/api/v1/access_token',
+                auth=auth,
+                data=data,
+                headers={'User-Agent': user_agent}
+                )
+            if response.status_code != 200:
+                logger.error(f"Failed to obtain access token: {response.text}")
+                raise Exception("Failed to obtain access token from Reddit API.")
+            
+            token = response.json().get('access_token')
+            
+            logger.info(f"Access token obtained successfully. Expires in {timedelta(seconds=response.json().get('expires_in', 0))}.")
+            return token
+
+        token = access_token()
+
         self.headers = {
-            'Authorization': f'bearer {self.access_token}',
+            'Authorization': f'bearer {token}',
             'User-Agent': self.user_agent
         }
-        logger.info(f"RedditExtractor initialized for subreddit: {self.subreddit}")
+        logger.info(f"RedditExtractor initialized")
 
 
-    def fetch_threads(self, limit: int = 10) -> dict:
-        url = f"{self.base_url}{self.thread_endpoint}"
+    def fetch_threads(self, subreddit, limit: int = 10) -> dict:
+        thread_endpoint = f"/r/{subreddit}/new"
+        url = f"{self.base_url}{thread_endpoint}"
         params = {
             'limit': limit
         }    
         response = requests.get(url, headers=self.headers, params=params)
         
         if response.status_code == 200:
-            logger.info(f"Fetched threads successfully from subreddit: {self.subreddit}")
+            logger.info(f"Fetched threads successfully from subreddit: {subreddit}")
             return response.json()
         else:
-            logger.error(f"Failed to fetch threads from subreddit: {self.subreddit}")
+            logger.error(f"Failed to fetch threads from subreddit: {subreddit}")
             return {"error": response.status_code, "message": response.text}
+        
+    def fetch_comments(self, subreddit) -> None:
+        comments_endpoint = f"#"
