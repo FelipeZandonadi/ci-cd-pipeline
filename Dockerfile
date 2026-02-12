@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia o restante do código do projeto
 COPY . .
 
-CMD ["python", "-m", "src.runner"]
+CMD ["python", "main.py"]
