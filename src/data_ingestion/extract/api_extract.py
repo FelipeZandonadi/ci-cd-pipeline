@@ -6,7 +6,7 @@ from src.data_ingestion.utils.logger import get_logger
 logger = get_logger(__name__)
 
 class RedditExtractor:
-    """
+    '''
     A class to extract data raw (the format is json) from Subreddit using the requests library.
 
     Attributes:
@@ -15,7 +15,7 @@ class RedditExtractor:
         username (str): The Reddit username.
         password (str): The Reddit password.
         user_agent (str): The application name
-    """
+    '''
     
     base_url: str
     client_id: str
@@ -26,7 +26,7 @@ class RedditExtractor:
     headers: dict[str, str]
     
     def __init__(self, client_id: str, client_secret: str, username: str, password: str, user_agent: str):
-        self.base_url = "https://oauth.reddit.com"
+        self.base_url = 'https://oauth.reddit.com'
         self.client_id = client_id
         self.client_secret = client_secret
         self.username = username
@@ -34,12 +34,12 @@ class RedditExtractor:
         self.user_agent = user_agent
 
         def access_token() -> str:
-            """
+            '''
             Build access token for Reddit API using OAuth2.
 
             Returns:
                 str: The access token.
-            """
+            '''
             auth: HTTPBasicAuth = HTTPBasicAuth(self.client_id, self.client_secret)
             data: dict[str, str] = {
                 'grant_type': 'password',
@@ -53,8 +53,8 @@ class RedditExtractor:
                 headers={'User-Agent': user_agent}
                 )
             if response.status_code != 200:
-                logger.error(f"Failed to obtain access token: {response.text}")
-                raise Exception("Failed to obtain access token from Reddit API.")
+                logger.error(f'Failed to obtain access token: {response.text}')
+                raise Exception('Failed to obtain access token from Reddit API.')
             
             token = response.json().get('access_token')
             
@@ -67,10 +67,10 @@ class RedditExtractor:
             'Authorization': f'bearer {token}',
             'User-Agent': self.user_agent
         }
-        logger.info(f"RedditExtractor initialized")
+        logger.info(f'RedditExtractor initialized')
 
     def bootstrap(self, subreddit: str, limit:int = 25) -> list[dict]:
-        """
+        '''
         Executes the primary data ingestion for a targeted subreddit.
 
         This method initializes the data pipeline by fetching the most recent 
@@ -88,21 +88,21 @@ class RedditExtractor:
         Note:
             To perform subsequent incremental loads, the 'data.before' fullname 
             from this response must be captured and persisted.
-        """
+        '''
 
-        thread_endpoint = f"/r/{subreddit}/new"
-        url = f"{self.base_url}{thread_endpoint}"
+        thread_endpoint = f'/r/{subreddit}/new'
+        url = f'{self.base_url}{thread_endpoint}'
         params = {
             'limit': limit
         }    
         response = requests.get(url, headers=self.headers, params=params)
         
         if response.status_code == 200:
-            logger.info(f"Fetched threads successfully from subreddit: {subreddit}")
+            logger.info(f'Fetched threads successfully from subreddit: {subreddit}')
             return [response.json()]
         else:
-            logger.error(f"Failed to fetch threads from subreddit: {subreddit}")
-            return [{"error": response.status_code, "message": response.text}]
+            logger.error(f'Failed to fetch threads from subreddit: {subreddit}')
+            return [{'error': response.status_code, 'message': response.text}]
 
     def sync_next_batch(
             self, subreddit: str,
@@ -110,7 +110,7 @@ class RedditExtractor:
             limit: int = 25, 
             count: int = 30
         ) -> list[dict]:
-        """
+        '''
         Performs an incremental sync of new threads using a pagination anchor.
 
         This method traverses the subreddit feed backwards from a specific point 
@@ -130,7 +130,7 @@ class RedditExtractor:
         Returns:
             list[dict]: A list of JSON response dictionaries containing the 
                 newly fetched batches of threads.
-        """
+        '''
 
         result: list = []
         before: str = fullname
@@ -140,22 +140,22 @@ class RedditExtractor:
 
         while before is not None:
             logger.debug(before)
-            thread_endpoint = f"/r/{subreddit}/new?before={before}&limit={limit}&count={count}"
-            url = f"{self.base_url}{thread_endpoint}"
+            thread_endpoint = f'/r/{subreddit}/new?before={before}&limit={limit}&count={count}'
+            url = f'{self.base_url}{thread_endpoint}'
             response = requests.get(url, headers=self.headers, params=params)
         
             if response.status_code == 200:
-                logger.info(f"Fetched threads successfully from subreddit: {subreddit}")
+                logger.info(f'Fetched threads successfully from subreddit: {subreddit}')
                 aux = response.json()
                 before = aux.get('data').get('before')
                 
                 result.append(aux)
             else:
-                logger.error(f"Failed to fetch threads from subreddit: {subreddit}")
-                return [{"error": response.status_code, "message": response.text}]
+                logger.error(f'Failed to fetch threads from subreddit: {subreddit}')
+                return [{'error': response.status_code, 'message': response.text}]
         
         return result
         
     def fetch_comments(self, subreddit) -> None:
-        comments_endpoint = f"#"
+        comments_endpoint = f'#'
         pass

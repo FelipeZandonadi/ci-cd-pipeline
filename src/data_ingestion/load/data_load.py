@@ -9,18 +9,18 @@ logger = get_logger(__name__)
 logger.critical('Hello World, making new module...')
 
 def upload_json_to_s3(data: dict, bucket: str) -> bool:
-    """
+    '''
     Uploads a dictionary as a JSON object directly to an S3 bucket.
 
     Args:
         data (dict): The dictionary to upload.
         bucket (str): The name of your S3 bucket.
         s3_key (str): The path/filename inside the bucket (e.g., 'raw/reddit/data.json').
-    """
+    '''
     # Inicializa o cliente S3
     s3_client = boto3.client('s3')
-    datestr = datetime.now().strftime("%Y-%m-%d")
-    s3_key = f"raw/{datestr}/reddit_batch_{datetime.now().timestamp()}.json"
+    datestr = datetime.now().strftime('%Y-%m-%d')
+    s3_key = f'raw/{datestr}/reddit_batch_{datetime.now().timestamp()}.json'
 
     try:
         json_data = json.dumps(data, ensure_ascii=False).encode('utf-8')
@@ -31,14 +31,14 @@ def upload_json_to_s3(data: dict, bucket: str) -> bool:
             Body=json_data,
             ContentType='application/json'
         )
-        logger.info(f"Successfully uploaded to s3://{bucket}/{s3_key}")
+        logger.info(f'Successfully uploaded to s3://{bucket}/{s3_key}')
         return True
     except ClientError as e:
-        logger.error(f"Failed to upload to S3: {e}")
+        logger.error(f'Failed to upload to S3: {e}')
         return False
 
 def save_json(data: dict, file_path: str, pretty_print: bool = False) -> None:
-    """
+    '''
     Serializes and saves a dictionary to a JSON file.
 
     This utility function handles the file writing process, allowing for either 
@@ -52,7 +52,7 @@ def save_json(data: dict, file_path: str, pretty_print: bool = False) -> None:
         pretty_print (bool, optional): If True, the JSON will be saved with 
             a 4-space indentation. If False, it will be saved in a compact 
             single-line format. Defaults to False.
-    """
+    '''
 
     indent_value = 4 if pretty_print else None
     separators_value = None if pretty_print else (',', ':')

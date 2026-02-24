@@ -10,32 +10,32 @@ def config_env() -> dict[str, dict[str, str]]:
     postgres_config: PostgresConfig = PostgresConfig()
     
     return {
-        "reddit": reddit_config.env,
-        "postgres": postgres_config.env,
+        'reddit': reddit_config.env,
+        'postgres': postgres_config.env,
     }
 
 def runner():
     configs = config_env()
-    logger.info("Configurations loaded successfully.")
+    logger.info('Configurations loaded successfully.')
 
     test: RedditExtractor = RedditExtractor(
-        client_id=configs["reddit"]["client_id"],
-        client_secret=configs["reddit"]["client_secret"],
-        username=configs["reddit"]["username"],
-        password=configs["reddit"]["password_account"],
-        user_agent=configs["reddit"]["user_agent"],
+        client_id=configs['reddit']['client_id'],
+        client_secret=configs['reddit']['client_secret'],
+        username=configs['reddit']['username'],
+        password=configs['reddit']['password_account'],
+        user_agent=configs['reddit']['user_agent'],
     )
     
     subreddits: list[str] = [
-        "CryptoCurrency",
-        "Bitcoin",
-        "Ethereum",
-        "ethtrader",
-        "dogecoin",
-        "CryptoMoonshots",
-        "btc",
-        "BitcoinBeginners",
-        "CryptoTechnology",
+        'CryptoCurrency',
+        'Bitcoin',
+        'Ethereum',
+        'ethtrader',
+        'dogecoin',
+        'CryptoMoonshots',
+        'btc',
+        'BitcoinBeginners',
+        'CryptoTechnology',
     ]
     
     
@@ -55,5 +55,5 @@ def runner():
     upload_json_to_s3(data, 'cryptocore-data')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     runner()

@@ -15,31 +15,31 @@ class RedditConfig:
     username: str
     
     REQUIRED_KEYS: Final[list[str]] = [
-        "REDDIT_CLIENT_ID",
-        "REDDIT_CLIENT_SECRET",
-        "REDDIT_PASSWORD_ACCOUNT",
-        "REDDIT_USER_AGENT",
-        "REDDIT_USERNAME",
+        'REDDIT_CLIENT_ID',
+        'REDDIT_CLIENT_SECRET',
+        'REDDIT_PASSWORD_ACCOUNT',
+        'REDDIT_USER_AGENT',
+        'REDDIT_USERNAME',
     ]
 
     def __init__(self):
         self._load_config()
-        logger.info("Reddit configuration loaded successfully.")
+        logger.info('Reddit configuration loaded successfully.')
 
     def _load_config(self) -> None:
-        """
+        '''
         Loads the environment variables and ensures they are not None.
         (Type Narrowing).
-        """
+        '''
         
         for key in self.REQUIRED_KEYS:
             value = os.getenv(key)
             
             if value is None:
-                logger.error(f"{key} is not set in environment variables.")
-                raise ValueError(f"{key} is not set in environment variables.")
+                logger.error(f'{key} is not set in environment variables.')
+                raise ValueError(f'{key} is not set in environment variables.')
             
-            attribute_name = key.lower().replace("reddit_", "")
+            attribute_name = key.lower().replace('reddit_', '')
             
             setattr(self, attribute_name, value)
 
@@ -47,11 +47,11 @@ class RedditConfig:
     def env(self) -> dict[str, str]:
 
         return {
-            "client_id": self.client_id,
-            "client_secret": self.client_secret,
-            "password_account": self.password_account,
-            "user_agent": self.user_agent,
-            "username": self.username,
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+            'password_account': self.password_account,
+            'user_agent': self.user_agent,
+            'username': self.username,
         }
 
 
@@ -64,40 +64,40 @@ class PostgresConfig():
     data_path: str
     
     REQUIRED_KEYS: Final[list[str]] = [
-        "POSTGRES_DB",
-        "POSTGRES_USER",
-        "POSTGRES_PASSWORD",
-        "POSTGRES_PORT",
-        "POSTGRES_DATA_PATH",
+        'POSTGRES_DB',
+        'POSTGRES_USER',
+        'POSTGRES_PASSWORD',
+        'POSTGRES_PORT',
+        'POSTGRES_DATA_PATH',
     ]
     
     def __init__(self):
         self._load_config()
-        logger.info("Postgres configuration loaded successfully.")
+        logger.info('Postgres configuration loaded successfully.')
         
     def _load_config(self) -> None:
-        """
+        '''
         Loads the environment variables and ensures they are not None.
         (Type Narrowing).
-        """
+        '''
         
         for key in self.REQUIRED_KEYS:
             value = os.getenv(key)
             
             if value is None:
-                logger.error(f"{key} is not set in environment variables.")
-                raise ValueError(f"{key} is not set in environment variables.")
+                logger.error(f'{key} is not set in environment variables.')
+                raise ValueError(f'{key} is not set in environment variables.')
             
-            attribute_name = key.lower().replace("postgres_", "")
+            attribute_name = key.lower().replace('postgres_', '')
             
             setattr(self, attribute_name, value)
         
     @property
     def env(self) -> dict[str, str]:
         return {
-            "POSTGRES_DB": self.db,
-            "POSTGRES_USER": self.user,
-            "POSTGRES_PASSWORD": self.password,
-            "POSTGRES_PORT": self.port,
-            "POSTGRES_DATA_PATH": self.data_path,
+            'POSTGRES_DB': self.db,
+            'POSTGRES_USER': self.user,
+            'POSTGRES_PASSWORD': self.password,
+            'POSTGRES_PORT': self.port,
+            'POSTGRES_DATA_PATH': self.data_path,
         }
