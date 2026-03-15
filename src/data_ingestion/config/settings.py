@@ -55,25 +55,23 @@ class RedditConfig:
         }
 
 
-class PostgresConfig():
+class AWSConfig():
     
-    db: str
-    user: str
-    password: str
-    port: str
-    data_path: str
+    access_key_id: str
+    secret_access_key: str
+    default_region: str
+    bucket_name: str
     
     REQUIRED_KEYS: Final[list[str]] = [
-        'POSTGRES_DB',
-        'POSTGRES_USER',
-        'POSTGRES_PASSWORD',
-        'POSTGRES_PORT',
-        'POSTGRES_DATA_PATH',
+        'AWS_ACCESS_KEY_ID',
+        'AWS_SECRET_ACCESS_KEY',
+        'AWS_DEFAULT_REGION',
+        'S3_BUCKET_NAME',
     ]
     
     def __init__(self):
         self._load_config()
-        logger.info('Postgres configuration loaded successfully.')
+        logger.info('AWS configuration loaded successfully.')
         
     def _load_config(self) -> None:
         '''
@@ -88,16 +86,15 @@ class PostgresConfig():
                 logger.error(f'{key} is not set in environment variables.')
                 raise ValueError(f'{key} is not set in environment variables.')
             
-            attribute_name = key.lower().replace('postgres_', '')
+            attribute_name = key.lower().replace('aws_', '')
             
             setattr(self, attribute_name, value)
         
     @property
     def env(self) -> dict[str, str]:
         return {
-            'POSTGRES_DB': self.db,
-            'POSTGRES_USER': self.user,
-            'POSTGRES_PASSWORD': self.password,
-            'POSTGRES_PORT': self.port,
-            'POSTGRES_DATA_PATH': self.data_path,
+            'AWS_ACCESS_KEY_ID': self.access_key_id,
+            'AWS_SECRET_ACCESS_KEY': self.secret_access_key,
+            'AWS_DEFAULT_REGION': self.default_region,
+            'S3_BUCKET_NAME': self.bucket_name,
         }
