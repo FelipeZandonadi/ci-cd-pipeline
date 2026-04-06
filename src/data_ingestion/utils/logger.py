@@ -6,19 +6,19 @@ from pathlib import Path
 from typing import Optional
 
 
-DEFAULT_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+DEFAULT_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 
 def get_logger(
     name: str = __name__,
     level: int = logging.INFO,
-    log_file: Optional[str] = 'logs/app.log',
+    log_file: Optional[str] = "logs/app.log",
     max_bytes: int = 10 * 1024 * 1024,
     backup_count: int = 5,
     fmt: str = DEFAULT_FORMAT,
     force: bool = False,
 ) -> Logger:
-    '''
+    """
     Retorna um logger configurado com Console + opcional RotatingFileHandler.
 
     Parâmetros:
@@ -29,7 +29,7 @@ def get_logger(
     - backup_count: quantos arquivos de backup manter.
     - fmt: formato da mensagem de log.
     - force: se True, reconfigura mesmo que handlers já existam.
-    '''
+    """
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
@@ -58,7 +58,7 @@ def get_logger(
             filename=str(log_path),
             maxBytes=max_bytes,
             backupCount=backup_count,
-            encoding='utf-8',
+            encoding="utf-8",
         )
         fh.setLevel(level)
         fh.setFormatter(formatter)
