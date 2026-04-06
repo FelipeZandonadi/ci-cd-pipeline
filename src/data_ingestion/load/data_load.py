@@ -6,8 +6,6 @@ from botocore.exceptions import ClientError
 
 logger = get_logger(__name__)
 
-logger.critical('Hello World, making new module...')
-
 def upload_json_to_s3(data: dict, bucket: str, s3_key: str) -> bool:
     '''
     Uploads a dictionary as a JSON object directly to an S3 bucket.

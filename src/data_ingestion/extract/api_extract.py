@@ -104,11 +104,10 @@ class RedditExtractor:
             logger.error(f'Failed to fetch threads from subreddit: {subreddit}')
             return [{'error': response.status_code, 'message': response.text}]
 
-    def sync_next_batch(
+    def batch(
             self, subreddit: str,
             fullname: str,
             limit: int = 25, 
-            count: int = 30
         ) -> list[dict]:
         '''
         Performs an incremental sync of new threads using a pagination anchor.
@@ -124,8 +123,6 @@ class RedditExtractor:
                 after this point.
             limit (int, optional): The maximum number of items to return in 
                 each slice of the listing. Defaults to 25 (max is 100).
-            count (int, optional): The number of items already seen in this 
-                listing, used by the API to maintain consistency. Defaults to 30.
 
         Returns:
             list[dict]: A list of JSON response dictionaries containing the 
@@ -135,21 +132,27 @@ class RedditExtractor:
         result: list = []
         before: str = fullname
         params = {
-            'limit': limit
+            'limit': limit,
+            'before': before,
         }
 
         while before is not None:
             logger.debug(before)
-            thread_endpoint = f'/r/{subreddit}/new?before={before}&limit={limit}&count={count}'
+            thread_endpoint = f'/r/{subreddit}/new'
             url = f'{self.base_url}{thread_endpoint}'
             response = requests.get(url, headers=self.headers, params=params)
-        
             if response.status_code == 200:
-                logger.info(f'Fetched threads successfully from subreddit: {subreddit}')
                 aux = response.json()
-                before = aux.get('data').get('before')
-                
-                result.append(aux)
+
+                if len(aux.get('data', {}).get('children', [])) == 0:
+                    before = None
+                else:
+                    logger.info(f'Fetched threads successfully from subreddit: {subreddit}')
+
+                    before = aux.get('data', {}).get('children', [{}])[0].get('data', {}).get('name', '')
+                    params['before'] = before
+
+                    result.insert(0, aux)
             else:
                 logger.error(f'Failed to fetch threads from subreddit: {subreddit}')
                 return [{'error': response.status_code, 'message': response.text}]

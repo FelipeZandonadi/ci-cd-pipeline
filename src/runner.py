@@ -40,29 +40,35 @@ def runner():
         'CryptoTechnology',
     ]
     
-    if len(sys.argv) > 1 and sys.argv[1] == 'bootstrap':
-        result: list[dict] = test.bootstrap(
+    if len(sys.argv) > 1:
+        result: list[dict] = test.batch(
             subreddit=subreddits[0],
-            limit=25,
+            fullname=sys.argv[1],
+            limit=10,
         )
+    
 
-        # Se possui próxima thread em direção ao futuro, after é o tail
-        # Se possui thread anterior em direção ao passado, before é o head
-        # Para o bootstrap, o 
-        head: str = result[0].get('data', {}).get('children', [{}])[0].get('data', {}).get('name', '')
-        tail: str = result[-1].get('data', {}).get('after', '')
-        datestr = datetime.now().strftime('%Y-%m-%d')
+    # Se possui próxima thread em direção ao futuro, after é o tail
+    # Se possui thread anterior em direção ao passado, before é o head
+        # print(result)
+    if not result:
+        logger.warning('No data fetched from Reddit API.')
+        return
 
-        s3_key = f'raw/reddit/{subreddits[0]}/{datestr}/b-{head}-a-{tail}{datetime.now().timestamp()}.json'
+    head: str = result[0].get('data', {}).get('children', [{}])[0].get('data', {}).get('name', '')
+    tail: str = result[-1].get('data', {}).get('children', [{}])[-1].get('data', {}).get('name', '')
+    datestr = datetime.now().strftime('%Y-%m-%d')
 
-        logger.info(f'Previous batch fullname: {head}')
-        logger.info(f'Next batch fullname: {tail}')
+    s3_key = f'raw/reddit/{subreddits[0]}/{datestr}/h-{head}-t-{tail}-tm-{datetime.now().timestamp()}.json'
 
-        upload_json_to_s3(
-            data=result, 
-            bucket=configs['aws']['s3_bucket_name'],
-            s3_key=s3_key,
-        )
+    logger.info(f'Previous batch fullname: {head}')
+    logger.info(f'Next batch fullname: {tail}')
+
+    upload_json_to_s3(
+        data=result, 
+        bucket=configs['aws']['s3_bucket_name'],
+        s3_key=s3_key,
+    )
     
     # result: list[dict] = test.bootstrap(
     #     subreddit=subreddits[0],
