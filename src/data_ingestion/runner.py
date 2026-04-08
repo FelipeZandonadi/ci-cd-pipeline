@@ -59,7 +59,7 @@ def reddit_threads_extractor(
 
     datestr = datetime.now().strftime("%Y-%m-%d")
 
-    s3_key = f"raw/reddit/{subreddit}/{datestr}/h-{head}-t-{tail}-tm-{datetime.now().timestamp()}.json"
+    s3_key = f"raw_hml/reddit/{subreddit}/{datestr}/h-{head}-t-{tail}-tm-{datetime.now().timestamp()}.json"
 
     logger.info(f"Previous batch fullname: {head}")
     logger.info(f"Next batch fullname: {tail}")
