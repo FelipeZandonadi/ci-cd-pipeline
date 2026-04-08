@@ -104,6 +104,23 @@ class RedditExtractor:
         }
         logger.info(f"RedditExtractor initialized")
 
+    def fetch_thread_before(self, subreddit: str, fullname: str, limit: int = 25) -> dict:
+        thread_endpoint = f"/r/{subreddit}/new"
+        url = f"{self.base_url}{thread_endpoint}"
+        params = {
+            "limit": limit,
+            "before": fullname,
+            }
+        
+        response = requests.get(url, headers=self.headers, params=params)
+
+        if response.status_code == 200:
+            logger.info(f"Fetched thread successfully from subreddit: {subreddit}")
+            return response.json()
+        else:
+            logger.error(f"Failed to fetch thread from subreddit: {subreddit}")
+            raise Exception(f"[{response.status_code}] Failed to fetch thread from subreddit: {subreddit}")
+
     def batch(
         self,
         subreddit: str,

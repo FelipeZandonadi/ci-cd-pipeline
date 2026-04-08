@@ -1,7 +1,11 @@
 import pytest
-from data_ingestion.extract.reddit import RedditAuth
+from data_ingestion.extract.reddit import RedditAuth, RedditExtractor
 from requests.auth import HTTPBasicAuth
 
+
+# ==========================================
+# ---------- Tests for RedditAuth ----------
+# ==========================================
 
 @pytest.fixture
 def auth_service():
@@ -78,3 +82,58 @@ def test_reddit_auth_no_token(auth_service, mock_requests_post):
         },
         headers={"User-Agent": "mock_user_agent"},
     )
+
+
+# ===============================================
+# ---------- Tests for RedditExtractor ----------
+# ===============================================
+
+@pytest.fixture
+def mock_requests_get(mocker):
+    mock_response = mocker.Mock()
+    mock_get = mocker.patch('data_ingestion.extract.reddit.requests.get', return_value=mock_response)
+
+    return mock_get, mock_response
+
+def test_reddit_extractor_fetch_thread_before(mock_requests_get):
+    mock_get, mock_response = mock_requests_get
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "data": {
+            "children": [
+                {"data": {"name": "thread1", "created_utc": 1700000000}},
+                {"data": {"name": "thread2", "created_utc": 1700001000}},
+            ]
+        }
+    }
+
+    extractor = RedditExtractor(token="mock_token_123", user_agent="mock_user_agent")
+    threads = extractor.fetch_thread_before(subreddit="mock_subreddit", fullname="t3_12345", limit=2)
+
+    assert len(threads) == 1
+    assert threads["data"]["children"][0]["data"]["name"] == "thread1"
+
+    mock_get.assert_called_once_with(
+        "https://oauth.reddit.com/r/mock_subreddit/new",
+        headers={"Authorization": "bearer mock_token_123", "User-Agent": "mock_user_agent"},
+        params={"before": "t3_12345", "limit": 2},
+    )
+
+def test_reddit_extractor_fetch_thread_before_failure(mock_requests_get):
+    mock_get, mock_response = mock_requests_get
+    mock_response.status_code = 500
+    mock_response.text = "Internal Server Error"
+
+    extractor = RedditExtractor(token="mock_token_123", user_agent="mock_user_agent")
+
+    with pytest.raises(Exception) as exc_info:
+        extractor.fetch_thread_before(subreddit="mock_subreddit", fullname="t3_12345", limit=2)
+    assert "[500] Failed to fetch thread from subreddit: mock_subreddit" in str(exc_info.value)
+
+    mock_get.assert_called_once_with(
+        "https://oauth.reddit.com/r/mock_subreddit/new",
+        headers={"Authorization": "bearer mock_token_123", "User-Agent": "mock_user_agent"},
+        params={"before": "t3_12345", "limit": 2},
+    )
+
+
