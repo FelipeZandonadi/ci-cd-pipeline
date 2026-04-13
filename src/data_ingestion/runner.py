@@ -1,11 +1,14 @@
 from data_ingestion.config.env_settings import AWSConfig, RedditConfig
 from data_ingestion.utils.logger import get_logger
-from data_ingestion.extract.reddit import RedditExtractor
+from data_ingestion.extract.reddit import RedditExtractor, RedditAuth
 from data_ingestion.load.data_load import save_json, upload_json_to_s3
 import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime
 import re
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = get_logger(__name__)
 
@@ -26,10 +29,14 @@ def reddit_threads_extractor(
     subreddit: str,
     fullname: str = None,
 ) -> None:
+    if fullname is None:
+        logger.warning("No fullname provided for subreddit: {subreddit}. Fetching the most recent threads.")
+        fullname = ""
+
     result: list[dict] = extractor.batch(
         subreddit=subreddit,
         fullname=fullname,
-        limit=24,
+        limit=25,
     )
 
     # Se possui próxima thread em direção ao futuro, after é o tail
@@ -78,7 +85,7 @@ def get_lastest_file_name(bucket_name: str, subreddit: str):
 
     try:
         paginas = paginator.paginate(
-            Bucket=bucket_name, Prefix=f"raw/reddit/{subreddit}/"
+            Bucket=bucket_name, Prefix=f"raw_hml/reddit/{subreddit}/"
         )
 
         bucket_vazio = True
@@ -110,11 +117,16 @@ def runner():
     configs = config_env()
     logger.info("Configurations loaded successfully.")
 
-    extractor: RedditExtractor = RedditExtractor(
+    token: str = RedditAuth(
         client_id=configs["reddit"]["client_id"],
         client_secret=configs["reddit"]["client_secret"],
         username=configs["reddit"]["username"],
         password=configs["reddit"]["password_account"],
+        user_agent=configs["reddit"]["user_agent"],
+    ).access_token()
+
+    extractor: RedditExtractor = RedditExtractor(
+        token=token,
         user_agent=configs["reddit"]["user_agent"],
     )
 
@@ -132,7 +144,7 @@ def runner():
 
     for subreddit in subreddits:
         logger.info(f"Starting data extraction for subreddit: {subreddit}")
-        bucket_name = configs["aws"]["s3_bucket_name"]
+        bucket_name = configs["aws"]["bucket_name"]
 
         last_obj_fullname = get_lastest_file_name(
             bucket_name=bucket_name, subreddit=subreddit
