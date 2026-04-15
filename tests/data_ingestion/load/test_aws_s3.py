@@ -1,7 +1,5 @@
-import os
 import json
 import pytest
-import boto3
 from moto import mock_aws
 
 from data_ingestion.load.aws_s3 import AWSClientS3, AWSServiceS3
@@ -12,14 +10,19 @@ from data_ingestion.load.aws_s3 import AWSClientS3, AWSServiceS3
 #=========================
 
 @pytest.fixture
-def aws_s3_client():
+def aws_mock():
     with mock_aws():
-        s3_client = AWSClientS3(
-            aws_access_key_id="test1",
-            aws_secret_access_key="test2",
-            region_name="us-east-1"
-        )
-        yield s3_client
+        yield
+
+
+@pytest.fixture
+def aws_s3_client(aws_mock):
+    s3_client = AWSClientS3(
+        aws_access_key_id="test1",
+        aws_secret_access_key="test2",
+        region_name="us-east-1"
+    )
+    yield s3_client
 
 def test_aws_client_s3_success(aws_s3_client):
     client = aws_s3_client.client
@@ -45,14 +48,16 @@ def test_aws_client_s3_failure(mocker):
 #==========================
 
 @pytest.fixture
-def aws_s3_service(aws_s3_client):
-    client = aws_s3_client.client
+def aws_s3_service(aws_mock):
+    client = AWSClientS3(
+        aws_access_key_id="test1",
+        aws_secret_access_key="test2",
+        region_name="us-east-1"
+    ).client
     bucket_name = "test-bucket-go-to-mars"
-
-    with mock_aws():
-        client.create_bucket(Bucket=bucket_name)
-        service = AWSServiceS3(client=client, bucket_name=bucket_name)
-        yield service
+    client.create_bucket(Bucket=bucket_name)
+    service = AWSServiceS3(client=client, bucket_name=bucket_name)
+    yield service
 
 
 # upload tests
@@ -85,7 +90,6 @@ def test_aws_service_s3_upload_failure(aws_s3_service, mocker):
     assert "Failed to upload data to S3: Upload failed" in str(exc_info.value)
 
 
-# lastest_key tests
 def test_aws_service_s3_latest_key_success_1(aws_s3_service):
     service = aws_s3_service
     s3_key = 'go_to_mars/2037-01-01/mars.json'
@@ -105,6 +109,14 @@ def test_aws_service_s3_latest_key_success_2(aws_s3_service):
     latest_key = service.latest_key('go_to_mars/')
 
     assert latest_key == s3_key2
+
+
+def test_aws_service_s3_latest_key_empty_bucket_returns_none(aws_s3_service):
+    service = aws_s3_service
+
+    latest_key = service.latest_key('go_to_mars/')
+
+    assert latest_key is None
 
 def test_aws_service_s3_latest_key_failure(aws_s3_service, mocker):
     service = aws_s3_service
