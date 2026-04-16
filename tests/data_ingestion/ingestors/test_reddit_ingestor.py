@@ -1,7 +1,5 @@
 import pytest
-import re
 from unittest.mock import MagicMock, patch
-from datetime import datetime
 from data_ingestion.ingestors.reddit import RedditIngestor
 
 

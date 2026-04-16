@@ -106,7 +106,7 @@ class RedditExtractor:
             "Authorization": f"bearer {self.token}",
             "User-Agent": self.user_agent,
         }
-        logger.info(f"RedditExtractor initialized")
+        logger.info("RedditExtractor initialized")
 
     def fetch_thread_before(
         self, subreddit: str, fullname: str, limit: int = 25
@@ -185,5 +185,5 @@ class RedditExtractor:
         return result
 
     def fetch_comments(self, subreddit) -> None:
-        comments_endpoint = f"#"
+        comments_endpoint = "#"
         pass

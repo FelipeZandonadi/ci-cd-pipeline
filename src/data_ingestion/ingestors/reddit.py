@@ -76,8 +76,7 @@ class RedditIngestor:
         timestamp = datetime.now().timestamp()
 
         s3_key = (
-            f"raw_hml/reddit/{subreddit}/{datestr}/"
-            f"h-{head}-t-{tail}-tm-{timestamp}.json"
+            f"raw/reddit/{subreddit}/{datestr}/h-{head}-t-{tail}-tm-{timestamp}.json"
         )
 
         self.storage.upload(s3_key=s3_key, data=result)

@@ -80,4 +80,6 @@ def runner():
 
     clock["end"] = pc()
 
-    logger.info(f"CryptoCore data_ingestion finished in {(clock.get('end')-clock.get('init')):.2f} seconds")
+    logger.info(
+        f"CryptoCore data_ingestion finished in {(clock.get('end') - clock.get('init')):.2f} seconds"
+    )
