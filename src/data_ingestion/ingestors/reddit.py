@@ -4,6 +4,7 @@ from data_ingestion.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class RedditIngestor:
     def __init__(self, extractor, storage):
         """
@@ -41,13 +42,11 @@ class RedditIngestor:
         Orchestrates the data extraction and storage for a specific subreddit.
         """
         logger.info(f"Starting ingestion for subreddit: {subreddit}")
-        
+
         last_fullname = self._get_last_checkpoint(subreddit)
-        
+
         result = self.extractor.batch(
-            subreddit=subreddit,
-            fullname=last_fullname or "",
-            limit=25
+            subreddit=subreddit, fullname=last_fullname or "", limit=25
         )
 
         if not result:
@@ -75,7 +74,7 @@ class RedditIngestor:
 
         datestr = datetime.now().strftime("%Y-%m-%d")
         timestamp = datetime.now().timestamp()
-        
+
         s3_key = (
             f"raw_hml/reddit/{subreddit}/{datestr}/"
             f"h-{head}-t-{tail}-tm-{timestamp}.json"

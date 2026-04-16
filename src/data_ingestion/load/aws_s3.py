@@ -57,7 +57,8 @@ class AWSServiceS3:
                 Body=json_data,
                 ContentType="application/json",
             )
-            logger.info(f"Successfully uploaded to s3://{self.bucket_name}/{s3_key}")
+            logger.info(f"Successfully uploaded to s3")
+            logger.debug(f"uploaded in this s3 key: s3://{self.bucket_name}/{s3_key}")
             return True
         except Exception as e:
             logger.error(f"Failed to upload data to S3: {e}")
