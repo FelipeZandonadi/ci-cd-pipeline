@@ -26,13 +26,13 @@ def ingestor(mock_extractor, mock_storage):
 def test_get_last_checkpoint_success(ingestor, mock_storage):
     """Should return the head fullname from the latest S3 key."""
     mock_storage.latest_key.return_value = (
-        'raw_hml/reddit/Bitcoin/2026-04-15/h-t3_abc123-t-t3_xyz789-tm-123456789.json'
+        'raw/reddit/Bitcoin/2026-04-15/h-t3_abc123-t-t3_xyz789-tm-123456789.json'
     )
 
     checkpoint = ingestor._get_last_checkpoint('Bitcoin')
 
     assert checkpoint == 't3_abc123'
-    mock_storage.latest_key.assert_called_once_with(prefix='raw_hml/reddit/Bitcoin/')
+    mock_storage.latest_key.assert_called_once_with(prefix='raw/reddit/Bitcoin/')
 
 
 def test_get_last_checkpoint_none(ingestor, mock_storage):
@@ -46,7 +46,7 @@ def test_get_last_checkpoint_none(ingestor, mock_storage):
 
 def test_get_last_checkpoint_no_match(ingestor, mock_storage):
     """Should return None if the latest key doesn't match the expected pattern."""
-    mock_storage.latest_key.return_value = 'raw_hml/reddit/Bitcoin/some-weird-file.json'
+    mock_storage.latest_key.return_value = 'raw/reddit/Bitcoin/some-weird-file.json'
 
     checkpoint = ingestor._get_last_checkpoint('Bitcoin')
 
@@ -58,7 +58,7 @@ def test_ingest_subreddit_success(ingestor, mock_extractor, mock_storage):
     # Setup
     subreddit = 'Bitcoin'
     last_checkpoint = 't3_old'
-    mock_storage.latest_key.return_value = f'raw_hml/reddit/{subreddit}/2026-04-15/h-{last_checkpoint}-t-t3_tail-tm-123.json'
+    mock_storage.latest_key.return_value = f'raw/reddit/{subreddit}/2026-04-15/h-{last_checkpoint}-t-t3_tail-tm-123.json'
 
     mock_data = [
         {'data': {'children': [{'data': {'name': 't3_new_head'}}]}},
@@ -80,7 +80,7 @@ def test_ingest_subreddit_success(ingestor, mock_extractor, mock_storage):
     s3_key = kwargs.get('s3_key') or args[0]
     uploaded_data = kwargs.get('data') or args[1]
 
-    assert f'raw_hml/reddit/{subreddit}/' in s3_key
+    assert f'raw/reddit/{subreddit}/' in s3_key
     assert 'h-t3_new_head-t-t3_new_tail' in s3_key
     assert uploaded_data == mock_data
 
