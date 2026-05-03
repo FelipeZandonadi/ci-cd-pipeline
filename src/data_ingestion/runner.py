@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 def runner():
     clock = {'init': pc(), 'end': 0}
 
-    logger.info('CryptoCore ingestion data_ingestion start.')
+    logger.info('CryptoCore ingestion start.')
 
     # 1. Config
     reddit_config = RedditConfig()
