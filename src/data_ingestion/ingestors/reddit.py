@@ -1,12 +1,13 @@
-import re
-from datetime import datetime
+from data_ingestion.load.s3_key import RedditS3Key
+from data_ingestion.load.aws_s3 import AWSServiceS3
+from data_ingestion.extract.reddit import RedditExtractor
 from data_ingestion.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 class RedditIngestor:
-    def __init__(self, extractor, storage):
+    def __init__(self, extractor: RedditExtractor, storage: AWSServiceS3):
         """
         Initializes the RedditIngestor.
 
@@ -27,15 +28,13 @@ class RedditIngestor:
         if not latest_key:
             return None
 
-        # Regex to extract the head (h-...) and tail (t-...) from the filename
-        match = re.search(r'h-([^-]+)-t-([^-]+)-', latest_key)
-        if match:
-            head = match.group(1)
+        try:
+            head = RedditS3Key.from_s3_key(latest_key).head
             logger.info(f'Last checkpoint found for {subreddit}: {head}')
             return head
-
-        logger.warning(f'Could not parse checkpoint from key: {latest_key}')
-        return None
+        except ValueError:
+            logger.warning(f'Could not parse checkpoint from key: {latest_key}')
+            return None
 
     def ingest_subreddit(self, subreddit: str) -> None:
         """
@@ -72,13 +71,7 @@ class RedditIngestor:
             logger.error(f'Failed to extract head/tail for {subreddit}: {e}')
             return
 
-        datestr = datetime.now().strftime('%Y-%m-%d')
-        timestamp = datetime.now().timestamp()
-
-        s3_key = (
-            f'raw/reddit/{subreddit}/{datestr}/'
-            f'h-{head}-t-{tail}-tm-{timestamp}.json'
-        )
+        s3_key = RedditS3Key.build(subreddit=subreddit, head=head, tail=tail).to_s3_key()
 
         self.storage.upload(s3_key=s3_key, data=result)
         logger.info(f'Successfully ingested {subreddit} -> {s3_key}')

@@ -1,4 +1,6 @@
 import json
+import re
+from typing import Callable
 
 import boto3
 
@@ -64,26 +66,30 @@ class AWSServiceS3:
             logger.error(f'Failed to upload data to S3: {e}')
             raise Exception(f'Failed to upload data to S3: {e}')
 
-    def latest_key(self, prefix: str) -> str | None:
+    _TM_PATTERN = re.compile(r'-tm-([\d.]+)\.json$')
+
+    def _tm_sort_key(self, s3_object: dict) -> tuple:
+        match = self._TM_PATTERN.search(s3_object['Key'])
+        if match:
+            return (float(match.group(1)), s3_object['Key'])
+        return (s3_object['LastModified'].timestamp(), s3_object['Key'])
+
+    def latest_key(
+        self,
+        prefix: str,
+        sort_key: Callable[[dict], tuple] | None = None,
+    ) -> str | None:
         try:
             paginator = self.client.get_paginator('list_objects_v2')
-            pages = paginator.paginate(
-                Bucket=self.bucket_name,
-                Prefix=prefix,
-            )
+            pages = paginator.paginate(Bucket=self.bucket_name, Prefix=prefix)
+            rank = sort_key or self._tm_sort_key
 
             latest_object = None
             for page in pages:
                 contents = page.get('Contents', [])
                 if contents:
-                    page_latest = max(
-                        contents,
-                        key=lambda item: (item['LastModified'], item['Key']),
-                    )
-                    if (
-                        latest_object is None
-                        or page_latest['LastModified'] > latest_object['LastModified']
-                    ):
+                    page_latest = max(contents, key=rank)
+                    if latest_object is None or rank(page_latest) > rank(latest_object):
                         latest_object = page_latest
 
             return latest_object['Key'] if latest_object else None

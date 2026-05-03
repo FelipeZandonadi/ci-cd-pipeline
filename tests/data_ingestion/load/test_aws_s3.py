@@ -129,6 +129,21 @@ def test_aws_service_s3_latest_key_empty_bucket_returns_none(aws_s3_service):
     assert latest_key is None
 
 
+def test_aws_service_s3_latest_key_uses_tm_timestamp_not_last_modified(aws_s3_service):
+    """latest_key should rank by tm- in the filename, ignoring S3 LastModified order."""
+    service = aws_s3_service
+    # older tm- uploaded last (would win by LastModified, should lose by tm-)
+    key_older = 'raw/reddit/Bitcoin/2026-05-01/h-t3_a-t-t3_b-tm-1000.0.json'
+    key_newer = 'raw/reddit/Bitcoin/2026-05-01/h-t3_c-t-t3_d-tm-2000.0.json'
+
+    service.client.put_object(Bucket=service.bucket_name, Key=key_newer, Body='x')
+    service.client.put_object(Bucket=service.bucket_name, Key=key_older, Body='x')
+
+    latest_key = service.latest_key('raw/reddit/Bitcoin/')
+
+    assert latest_key == key_newer
+
+
 def test_aws_service_s3_latest_key_failure(aws_s3_service, mocker):
     service = aws_s3_service
 
