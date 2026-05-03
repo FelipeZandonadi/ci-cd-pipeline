@@ -22,7 +22,7 @@ jobs:
         run: uv sync --frozen
 
       - name: Ruff format
-        run: uv run -m ruff check src tests
+        run: uvx ruff check src tests
 
       - name: Run tests 
         run: uv run -m pytest
