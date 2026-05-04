@@ -1,4 +1,5 @@
 import requests
+import time
 from requests.auth import HTTPBasicAuth
 from datetime import timedelta
 from data_ingestion.utils.logger import get_logger
@@ -181,6 +182,8 @@ class RedditExtractor:
                 )
 
                 result.insert(0, response)
+            
+            time.sleep(1)
 
         return result
 
