@@ -1,6 +1,7 @@
 import requests
+import time
 from requests.auth import HTTPBasicAuth
-from datetime import time, timedelta
+from datetime import timedelta
 from data_ingestion.utils.logger import get_logger
 
 logger = get_logger(__name__)
