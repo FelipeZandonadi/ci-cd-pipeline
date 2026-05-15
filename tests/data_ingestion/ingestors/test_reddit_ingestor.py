@@ -58,7 +58,9 @@ def test_ingest_subreddit_success(ingestor, mock_extractor, mock_storage):
     # Setup
     subreddit = 'Bitcoin'
     last_checkpoint = 't3_old'
-    mock_storage.latest_key.return_value = f'raw/reddit/{subreddit}/2026-04-15/h-{last_checkpoint}-t-t3_tail-tm-123.json'
+    mock_storage.latest_key.return_value = (
+        f'raw/reddit/{subreddit}/2026-04-15/h-{last_checkpoint}-t-t3_tail-tm-123.json'
+    )
 
     mock_data = [
         {'data': {'children': [{'data': {'name': 't3_new_head'}}]}},

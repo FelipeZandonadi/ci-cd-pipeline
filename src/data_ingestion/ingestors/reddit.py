@@ -71,7 +71,9 @@ class RedditIngestor:
             logger.error(f'Failed to extract head/tail for {subreddit}: {e}')
             return
 
-        s3_key = RedditS3Key.build(subreddit=subreddit, head=head, tail=tail).to_s3_key()
+        s3_key = RedditS3Key.build(
+            subreddit=subreddit, head=head, tail=tail
+        ).to_s3_key()
 
         self.storage.upload(s3_key=s3_key, data=result)
         logger.info(f'Successfully ingested {subreddit} -> {s3_key}')
